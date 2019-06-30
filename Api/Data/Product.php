@@ -30,7 +30,7 @@ abstract class Product
     /** @var int[] */
     protected $category_ids = [];
 
-    /** @var array  */
+    /** @var array */
     protected $website_ids = [];
 
     /** @var ProductStoreView[] */
@@ -38,6 +38,9 @@ abstract class Product
 
     /** @var ProductStockItem[] */
     protected $stockItems = [];
+
+    /** @var SourceItem[] */
+    protected $sourceItems = [];
 
     /** @var Image[] */
     protected $images = [];
@@ -54,7 +57,7 @@ abstract class Product
     /** @var CustomOption[]|null */
     protected $customOptions = null;
 
-    /** @var array  */
+    /** @var array */
     protected $unresolvedAttributes = [];
 
     // =========================================
@@ -64,10 +67,10 @@ abstract class Product
     /** @var  array */
     protected $errors = [];
 
-    /** @var bool  */
+    /** @var bool */
     protected $placeholder = false;
 
-    /** @var string  */
+    /** @var string */
     public $lineNumber = "";
 
     /** @var string|null */
@@ -147,7 +150,8 @@ abstract class Product
      * @param string $storeViewCode
      * @return ProductStoreView
      */
-    public function storeView(string $storeViewCode) {
+    public function storeView(string $storeViewCode)
+    {
         $storeViewCode = trim($storeViewCode);
         if (!array_key_exists($storeViewCode, $this->storeViews)) {
             $this->storeViews[$storeViewCode] = new ProductStoreView();
@@ -158,7 +162,8 @@ abstract class Product
     /**
      * @return ProductStoreView
      */
-    public function global() {
+    public function global()
+    {
         return $this->storeViews[self::GLOBAL_STORE_VIEW_CODE];
     }
 
@@ -187,6 +192,27 @@ abstract class Product
     public function getStockItems()
     {
         return $this->stockItems;
+    }
+
+    /**
+     * @param string $sourceCode
+     * @return SourceItem
+     */
+    public function sourceItem(string $sourceCode)
+    {
+        $sourceCode = trim($sourceCode);
+        if (!array_key_exists($sourceCode, $this->sourceItems)) {
+            $this->sourceItems[$sourceCode] = new SourceItem();
+        }
+        return $this->sourceItems[$sourceCode];
+    }
+
+    /**
+     * @return SourceItem[]
+     */
+    public function getSourceItems(): array
+    {
+        return $this->sourceItems;
     }
 
     public function addCategoryIds(array $categoryIds)

@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.3.1 : Speed optimization for stock
+
+Speed optimizations:
+
+- msi, source items: import quantity and status together
+
+- stock items (qty, is_in_stock, ...) large speed gain by bundling queries per attribute code
+
+## 1.3.0 : Multi-Source Inventory - 07-12-2018
+
+Magento 2.3: Import of source items.
+
+## 1.2.7 : FIX XSD related products / empty select values - 01-12-2018
+
+Pull request by Jeroen Nijhuis / Epartment
+
+- Updated product-import.xsd to use correct element names for linked product types (related, cross-sell, up-sell)
+- Adjusted samples to reflect changes
+
+Updated integration test to import all example xml files.
+
+I made the importer's behaviour for empty values more explicit in import.md, especially for empty select and multiselect attributes.
+
+Fixed the fatal error that occurred when a select was set to null.
+
+## 1.2.6 : FIX impossible to import custom attributes via XML - 21-11-2018
+
+Pull request by Antonino Bonumore / Emergento
+
 ## 1.2.4 : Lazy loading option values and cache manager - 09-11-2018
 
 Existing option values are now only loaded per attribute, when it is needed.

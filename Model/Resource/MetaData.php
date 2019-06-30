@@ -32,6 +32,7 @@ class MetaData
     const ATTRIBUTE_OPTION_VALUE_TABLE = 'eav_attribute_option_value';
     const CATALOG_ATTRIBUTE_TABLE = 'catalog_eav_attribute';
     const STORE_TABLE = 'store';
+    const SOURCE_TABLE = 'inventory_source';
     const WEBSITE_TABLE = 'store_website';
     const TAX_CLASS_TABLE = 'tax_class';
     const CUSTOMER_GROUP_TABLE = 'customer_group';
@@ -64,6 +65,8 @@ class MetaData
     const CUSTOM_OPTION_TYPE_PRICE_TABLE = 'catalog_product_option_type_price';
     const CUSTOM_OPTION_TYPE_TITLE_TABLE = 'catalog_product_option_type_title';
     const CUSTOM_OPTION_TYPE_VALUE_TABLE = 'catalog_product_option_type_value';
+    const INVENTORY_SOURCE_ITEM = 'inventory_source_item';
+    const INVENTORY_LOW_STOCK_NOTIFICATION_CONFIGURATION = 'inventory_low_stock_notification_configuration';
 
     /** @var  Magento2DbConnection */
     protected $db;
@@ -74,10 +77,10 @@ class MetaData
     /** @var ValueSerializer */
     public $valueSerializer;
 
-    /** @var string  */
+    /** @var string */
     public $entityTypeTable;
 
-    /** @var  string  */
+    /** @var string */
     public $productEntityTable;
 
     /** @var string */
@@ -89,13 +92,13 @@ class MetaData
     /** @var string */
     public $urlRewriteProductCategoryTable;
 
-    /** @var  string */
+    /** @var string */
     public $categoryProductTable;
 
-    /** @var  string */
+    /** @var string */
     public $configDataTable;
 
-    /** @var  string */
+    /** @var string */
     public $productWebsiteTable;
 
     /** @var string */
@@ -122,13 +125,13 @@ class MetaData
     /** @var string */
     public $relationTable;
 
-    /** @var string  */
+    /** @var string */
     public $attributeTable;
 
-    /** @var string  */
+    /** @var string */
     public $catalogAttributeTable;
 
-    /** @var string  */
+    /** @var string */
     public $attributeOptionTable;
 
     /** @var string */
@@ -139,6 +142,9 @@ class MetaData
 
     /** @var string */
     public $storeTable;
+
+    /** @var string */
+    public $sourceTable;
 
     /** @var string */
     public $websiteTable;
@@ -209,10 +215,16 @@ class MetaData
     /** @var string */
     public $customOptionTypeValueTable;
 
-    /** @var  int */
+    /** @var string */
+    public $inventorySourceItem;
+
+    /** @var string */
+    public $inventoryLowStockNotificationConfiguration;
+
+    /** @var int */
     public $defaultCategoryAttributeSetId;
 
-    /** @var int  */
+    /** @var int */
     public $defaultProductAttributeSetId;
 
     /** @var array Maps attribute set name to id */
@@ -224,6 +236,9 @@ class MetaData
     /** @var array Maps store view code to id */
     public $storeViewMap;
 
+    /** @var array Maps source code to source code */
+    public $sourceCodeMap;
+
     /** @var array Maps store view id to website id */
     public $storeViewWebsiteMap;
 
@@ -233,13 +248,13 @@ class MetaData
     /** @var array Maps customer group name to id */
     public $customerGroupMap;
 
-    /** @var int  */
+    /** @var int */
     public $productEntityTypeId;
 
-    /** @var int  */
+    /** @var int */
     public $categoryEntityTypeId;
 
-    /** @var  EavAttributeInfo[] */
+    /** @var EavAttributeInfo[] */
     public $productEavAttributeInfo;
 
     /** @var int */
@@ -248,10 +263,10 @@ class MetaData
     /** @var array */
     public $categoryAttributeMap;
 
-    /** @var  string */
+    /** @var string */
     public $productUrlSuffix;
 
-    /** @var  string */
+    /** @var string */
     public $categoryUrlSuffix;
 
     /** @var bool Create 301 rewrite for older url_rewrite entries */
@@ -308,6 +323,7 @@ class MetaData
         $this->attributeOptionValueTable = $this->db->getFullTableName(self::ATTRIBUTE_OPTION_VALUE_TABLE);
         $this->attributeSetTable = $this->db->getFullTableName(self::ATTRIBUTE_SET_TABLE);
         $this->storeTable = $this->db->getFullTableName(self::STORE_TABLE);
+        $this->sourceTable = $this->db->getFullTableName(self::SOURCE_TABLE);
         $this->websiteTable = $this->db->getFullTableName(self::WEBSITE_TABLE);
         $this->taxClassTable = $this->db->getFullTableName(self::TAX_CLASS_TABLE);
         $this->linkTable = $this->db->getFullTableName(self::LINK_TABLE);
@@ -331,8 +347,13 @@ class MetaData
         $this->customOptionTypeTitleTable = $this->db->getFullTableName(self::CUSTOM_OPTION_TYPE_TITLE_TABLE);
         $this->customOptionTypePriceTable = $this->db->getFullTableName(self::CUSTOM_OPTION_TYPE_PRICE_TABLE);
         $this->customOptionTypeValueTable = $this->db->getFullTableName(self::CUSTOM_OPTION_TYPE_VALUE_TABLE);
+        $this->inventorySourceItem = $this->db->getFullTableName(self::INVENTORY_SOURCE_ITEM);
+        $this->inventoryLowStockNotificationConfiguration = $this->db->getFullTableName(self::INVENTORY_LOW_STOCK_NOTIFICATION_CONFIGURATION);
     }
 
+    /**
+     * @throws Exception
+     */
     public function reloadCache()
     {
         $this->productEntityTypeId = $this->getProductEntityTypeId();
@@ -346,7 +367,7 @@ class MetaData
 
         $this->productUrlSuffix = $this->getProductUrlSuffix();
         $this->categoryUrlSuffix = $this->getCategoryUrlSuffix();
-        $this->saveRewritesHistory  = $this->getSaveRewritesHistory();
+        $this->saveRewritesHistory = $this->getSaveRewritesHistory();
 
         $this->storeViewMap = $this->getStoreViewMap();
         $this->storeViewWebsiteMap = $this->getStoreViewWebsiteMap();
@@ -359,6 +380,10 @@ class MetaData
         $this->mediaGalleryAttributeId = $this->getMediaGalleryAttributeId();
         $this->productEavAttributeInfo = $this->getProductEavAttributeInfo();
         $this->imageAttributeIds = $this->getImageAttributeIds();
+
+        if (version_compare($this->magentoVersion, "2.3.0") >= 0) {
+            $this->sourceCodeMap = $this->getSourceCodeMap();
+        }
     }
 
     /**
@@ -441,7 +466,7 @@ class MetaData
         return $this->db->fetchMap(
             "SELECT `attribute_set_name`, `attribute_set_id` FROM {$this->attributeSetTable} WHERE `entity_type_id` = ?
         ", [
-                $this->productEntityTypeId
+            $this->productEntityTypeId
         ]);
     }
 
@@ -496,6 +521,11 @@ class MetaData
         return $this->db->fetchMap("SELECT `store_id`, `website_id` FROM {$this->storeTable}");
     }
 
+    protected function getSourceCodeMap()
+    {
+        return $this->db->fetchMap("SELECT `source_code`, `source_code` FROM {$this->sourceTable}");
+    }
+
     /**
      * Returns a code => id map for websites.
      *
@@ -539,7 +569,7 @@ class MetaData
             $this->categoryEntityTypeId
         ]);
     }
-    
+
     /**
      * @return array An attribute code indexed array of AttributeInfo
      */

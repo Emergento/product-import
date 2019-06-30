@@ -8,6 +8,7 @@ use BigBridge\ProductImport\Api\Data\GroupedProduct;
 use BigBridge\ProductImport\Api\Data\Product;
 use BigBridge\ProductImport\Api\Data\ProductStockItem;
 use BigBridge\ProductImport\Api\Data\ProductStoreView;
+use BigBridge\ProductImport\Api\Data\SourceItem;
 use BigBridge\ProductImport\Api\Data\TierPrice;
 use BigBridge\ProductImport\Helper\Decimal;
 use BigBridge\ProductImport\Model\Data\EavAttributeInfo;
@@ -77,13 +78,13 @@ class Validator
             }
 
             // name
-            if (!array_key_exists('name', $globalAttributes) || $globalAttributes['name'] === ""  || $globalAttributes['name'] === null) {
+            if (!array_key_exists('name', $globalAttributes) || $globalAttributes['name'] === "" || $globalAttributes['name'] === null) {
                 $product->addError("missing name");
             }
 
             // price
             if (!($product instanceof GroupedProduct) && !($product instanceof BundleProduct)) {
-                if (!array_key_exists('price', $globalAttributes) || $globalAttributes['price'] === ""  || $globalAttributes['price'] === null) {
+                if (!array_key_exists('price', $globalAttributes) || $globalAttributes['price'] === "" || $globalAttributes['price'] === null) {
                     $product->addError("missing price");
                 }
             }
@@ -115,6 +116,24 @@ class Validator
                 if (!($tierPrice instanceof TierPrice)) {
                     $product->addError("tierprices should be an array of TierPrice");
                     break;
+                }
+            }
+        }
+
+        // source items
+        foreach ($product->getSourceItems() as $sourceItem) {
+
+            $sourceItemAttributes = $sourceItem->getAttributes();
+
+            foreach ([SourceItem::QUANTITY, SourceItem::NOTIFY_STOCK_QTY] as $sourceItemAttribute) {
+
+                if (array_key_exists($sourceItemAttribute, $sourceItemAttributes)) {
+
+                    $value = $sourceItemAttributes[$sourceItemAttribute];
+
+                    if (!preg_match(Decimal::DECIMAL_PATTERN, $value)) {
+                        $product->addError("source item " . $sourceItemAttribute . " is not a decimal number with dot (" . $value . ")");
+                    }
                 }
             }
         }
@@ -191,7 +210,7 @@ class Validator
 
             $decimalAttributes =
                 [ProductStockItem::QTY, ProductStockItem::MIN_QTY, ProductStockItem::NOTIFY_STOCK_QTY,
-                ProductStockItem::MIN_SALE_QTY, ProductStockItem::MAX_SALE_QTY, ProductStockItem::QTY_INCREMENTS];
+                    ProductStockItem::MIN_SALE_QTY, ProductStockItem::MAX_SALE_QTY, ProductStockItem::QTY_INCREMENTS];
 
 
             // decimals

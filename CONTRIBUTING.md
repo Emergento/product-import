@@ -10,7 +10,7 @@ Unit tests require PHPUnit 7 with namespaces.
 
 ### Integration tests
 
-To run the integration tests, see [Integration testing](integration-tests.md)
+To run the integration tests, see [Integration testing](doc/integration-tests.md)
 
 ### WebApi functional tests
 
@@ -46,7 +46,10 @@ For each supported product property
 * Update the speed test
 * Add validation code
 * Add a test for validation
+* Add a resolver if needed
+* Add a test for resolving
 * If a property is not set explicitly by the user, no action should be taken. Especially: no values should be removed when the user has not set any values.
+* Add element in the XML import
 * Update the documentation
 
 ## Naming

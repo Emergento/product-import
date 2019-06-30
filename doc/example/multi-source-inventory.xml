@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<import>
+	<simple sku="my-msi-product1">
+		<attribute_set_name>Default</attribute_set_name>
+		<global>
+			<name>My MSI Product</name>
+			<price>12.45</price>
+		</global>
+		<source_item code="default">
+			<quantity>98</quantity>
+		</source_item>
+	</simple>
+	<simple sku="my-msi-product2">
+		<attribute_set_name>Default</attribute_set_name>
+		<global>
+			<name>My MSI Product</name>
+			<price>12.45</price>
+		</global>
+		<source_item code="default">
+			<quantity>137</quantity>
+			<status>1</status>
+			<notify_stock_qty>10</notify_stock_qty>
+		</source_item>
+	</simple>
+</import>

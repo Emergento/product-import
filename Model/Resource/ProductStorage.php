@@ -19,6 +19,7 @@ use BigBridge\ProductImport\Model\Resource\Storage\GroupedStorage;
 use BigBridge\ProductImport\Model\Resource\Storage\ImageStorage;
 use BigBridge\ProductImport\Model\Resource\Storage\LinkedProductStorage;
 use BigBridge\ProductImport\Model\Resource\Storage\ProductEntityStorage;
+use BigBridge\ProductImport\Model\Resource\Storage\SourceItemStorage;
 use BigBridge\ProductImport\Model\Resource\Storage\StockItemStorage;
 use BigBridge\ProductImport\Model\Resource\Storage\TierPriceStorage;
 use BigBridge\ProductImport\Model\Resource\Storage\UrlRewriteStorage;
@@ -63,6 +64,9 @@ class ProductStorage
     /** @var StockItemStorage */
     protected $stockItemStorage;
 
+    /** @var SourceItemStorage */
+    protected $sourceItemStorage;
+
     /** @var CustomOptionStorage */
     protected $customOptionStorage;
 
@@ -93,6 +97,7 @@ class ProductStorage
         LinkedProductStorage $linkedProductStorage,
         TierPriceStorage $tierPriceStorage,
         StockItemStorage $stockItemStorage,
+        SourceItemStorage $sourceItemStorage,
         CustomOptionStorage $customOptionStorage,
         DownloadableStorage $downloadableStorage,
         ConfigurableStorage $configurableStorage,
@@ -111,6 +116,7 @@ class ProductStorage
         $this->linkedProductStorage = $linkedProductStorage;
         $this->tierPriceStorage = $tierPriceStorage;
         $this->stockItemStorage = $stockItemStorage;
+        $this->sourceItemStorage = $sourceItemStorage;
         $this->customOptionStorage = $customOptionStorage;
         $this->downloadableStorage = $downloadableStorage;
         $this->configurableStorage = $configurableStorage;
@@ -163,6 +169,9 @@ class ProductStorage
      */
     public function preProcessProducts(array $products, ImportConfig $config): array
     {
+        // start filtering out products that use features that are not part of this Magento version
+        $products = $this->checkForVersionSpecificFeatures($products);
+
         // check if the pre-specified ids exist; changes $product->errors
         $this->productEntityStorage->checkIfIdsExist($products);
 
@@ -190,6 +199,29 @@ class ProductStorage
             if ($product->isOk()) {
                 $validProducts[] = $product;
             }
+        }
+
+        return $validProducts;
+    }
+
+    /**
+     * @param Product[] $products
+     */
+    protected function checkForVersionSpecificFeatures(array $products): array
+    {
+        $validProducts = [];
+
+        if (version_compare($this->metaData->magentoVersion, "2.3.0") < 0) {
+
+            foreach ($products as $product) {
+                if (!empty($product->getSourceItems())) {
+                    $product->addError("source items are supported only in Magento 2.3");
+                } else {
+                    $validProducts[] = $product;
+                }
+            }
+        } else {
+            $validProducts = $products;
         }
 
         return $validProducts;
@@ -287,6 +319,10 @@ class ProductStorage
         $this->groupedStorage->performTypeSpecificStorage($productsByType[GroupedProduct::TYPE_GROUPED]);
         $this->bundleStorage->performTypeSpecificStorage($productsByType[BundleProduct::TYPE_BUNDLE]);
         $this->configurableStorage->performTypeSpecificStorage($productsByType[ConfigurableProduct::TYPE_CONFIGURABLE]);
+
+        if (version_compare($this->metaData->magentoVersion, "2.3.0") >= 0) {
+            $this->sourceItemStorage->storeSourceItems($validProducts);
+        }
     }
 
     /**
